@@ -26,5 +26,10 @@ function createSocketServer(httpServer) {
     return io;
 }
 
+// Send a message ("new entry") to all connected clients
+function emitNewEntry(entry) {
+    io.emit("new entry", entry);
+}
+
 // Export any functions so they can be used outside this file
-module.exports = {createSocketServer};
+module.exports = {createSocketServer, emitNewEntry};
