@@ -31,9 +31,42 @@ route.get("/", async (req, res) => {
     res.render("index", {entries: formattedEntries});
 });
 
+route.get("/createEntry", (req, res) => {
+    // Send the HoM object to the createEntry view
+    res.render("createEntry", {habits: habitsOfMind})
+});
+
+// Handle the POST request for creating new entries
+route.post("/createEntry", async (req, res) => {
+    const entry = new Entry({
+        date: req.body.date,
+        email: req.session.email,
+        habit: req.body.habit,
+        content: req.body.content,
+    });
+
+    // Save the new entry to the MongoDB database
+    await entry.save();
+
+    // Send this new entry to all connected clients
+    emitNewEntry({
+        id: entry._id,
+        date: entry.date.toLocaleDateString(),
+        habit: entry.habit,
+        content: entry.content.slice(0, 20) + "...",
+    });
+
+    // Send a response of "ok"
+    res.status(201).end()
+});
+
 // Delegate all authentication to the auth.js router
 route.use("/auth", require("./auth"));
 
-
+route.get("/editEntry/:id", async (req, res) => {
+    const entry = await Entry.findById(req.params.id);
+    console.log(entry);
+    res.send(entry);
+});
 
 module.exports = route;

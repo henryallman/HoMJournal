@@ -1,0 +1,27 @@
+<!-- include header -->
+<% include("include/_header") %>
+
+<!-- Main Site -->
+<main>
+    <div class="indexTopBar">
+        <img src="img/SE-GitHub-image.png" alt="NCHS Logo" />
+        <h1>Habits of Mind Journal</h1>
+        <a href="/createEntry" role="button">Create Entry</a>
+    </div>
+
+    <div class="entries" id="entries">
+        <% for(let entry of entries) { %>
+            <div class="entry">
+                <div class="entryDate"><%=entry.date%></div>
+                <div class="entryHabit"><%=entry.habit%></div>
+                <div class="entryContent"><%=entry.content%></div>
+                <div><a href="/editEntry/<%=entry.id%>" role="button" class="secondary">Edit</a></div>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+<!-- End of Main Site -->
+
+<!-- include footer -->
+<% include("include/_footer") %>
