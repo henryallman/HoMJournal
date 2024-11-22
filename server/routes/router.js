@@ -60,13 +60,17 @@ route.post("/createEntry", async (req, res) => {
     res.status(201).end()
 });
 
-// Delegate all authentication to the auth.js router
-route.use("/auth", require("./auth"));
-
+// Edit an entry with the id given as a parameter
+// Currently this just logs the entry to be edited
 route.get("/editEntry/:id", async (req, res) => {
     const entry = await Entry.findById(req.params.id);
     console.log(entry);
     res.send(entry);
 });
+
+// Delegate all authentication to the auth.js router
+route.use("/auth", require("./auth"));
+
+
 
 module.exports = route;
