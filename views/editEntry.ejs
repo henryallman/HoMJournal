@@ -4,31 +4,32 @@
 <!-- Main Site -->
 <main>
     <img src="img/SE-GitHub-image.png" alt="NCHS Logo" />
-    <h1>Habits of Mind Journal Entry</h1>
+    <h1>Edit Habits of Mind Journal Entry</h1>
     <div>
-        <label>Date <input type="date" class="date" /></label>
+        <label>Date <input type="date" class="date" value="<%= entry.date %>" /></label>
 
         <fieldset>
             <legend>Habit of Mind:</legend>
             <% for(let habit of habits) { %>
             <label>
                 <input type="radio" class="habits" name="habits"
-                value="<%=habit%>" /> 
+                value="<%=habit%>" 
+                <%= entry.habit === habit ? 'checked' : '' %>/> 
                 <%=habit%>
             </label>
             <br/>
             <% } %>
-            
         </fieldset>
 
-        <label>Journal Entry <textarea class="content">My Journal Entry</textarea></label>
-        <input type="submit" class="submit" value="Submit" />
+        <label>Journal Entry <textarea class="content"><%=entry.content%></textarea></label>
+        <input type="hidden" class="entryId" value="<%=entry._id%>" />
+        <input type="submit" class="submit" value="Update" />
     </div>
 </main>
 
 <!-- End of Main Site -->
 
-<script src="/js/createEntry.js"></script>
+<script src="/js/editEntry.js"></script>
 
 <!-- include footer -->
 <% include("include/_footer") %>
