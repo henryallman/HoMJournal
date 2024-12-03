@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Export Entries</title>
+    <style>
+        .export-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .export-table th, .export-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .export-table th {
+            background-color: #f4f4f4;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>Journal Entries</h1>
+    <table class="export-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Habit</th>
+                <th>Content</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% entries.forEach(entry => { %>
+                <tr>
+                    <td><%= entry.Date %></td>
+                    <td><%= entry.Habit %></td>
+                    <td><pre><%= entry.Content %></pre></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+    <a href="/" class="btn btn-primary">Back to Journal</a>
+</body>
+</html> 

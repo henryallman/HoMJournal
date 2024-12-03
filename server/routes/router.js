@@ -11,21 +11,59 @@ const habitsOfMind = require("../model/habitsOfMind.json");
 // When the client makes at HTTP GET request to this path
 // the callback function is executed
 route.get("/", async (req, res) => {
-    console.log("Path Requested: "+req.path);
+    try {
+        // Get the habit filter from query parameters
+        const habitFilter = req.query.habit ? { 
+            habit: { $regex: new RegExp(req.query.habit, 'i') }  // Case-insensitive search
+        } : {};
 
-    const entries = await Entry.find();
-    
-    // Convert MongoDB objects to objects formatted for EJS
-    const formattedEntries = entries.map((entry) => {
-        return {
-            id: entry._id,
-            date: entry.date ? entry.date.toLocaleDateString() : 'No date',
-            habit: entry.habit,
-            content: entry.content ? entry.content.slice(0, 20) + "..." : '',
+        // Add email filter to only show user's entries
+        const filter = {
+            ...habitFilter,
+            email: req.session.email
         };
-    });
 
-    res.render("index", {entries: formattedEntries});
+        // Fetch entries with filter, sort by date descending
+        let entries = await Entry.find(filter)
+            .sort({ date: -1 })  // -1 for descending order
+            .lean()  // Convert to plain JavaScript objects
+            .exec();
+
+        // Format the dates to MM/DD/YYYY format
+        entries = entries.map(entry => ({
+            ...entry,
+            date: entry.date.toLocaleDateString('en-US')  // Changed this line to use en-US locale
+        }));
+
+        // Use static list of all Habits of Mind
+        const habits = [
+            "Persisting",
+            "Managing Impulsivity",
+            "Listening with Understanding and Empathy",
+            "Thinking Flexibly",
+            "Thinking About Thinking (Metacognition)",
+            "Striving for Accuracy",
+            "Questioning and Problem Posing",
+            "Applying Past Knowledge to New Situations",
+            "Thinking and Communicating with Clarity and Precision",
+            "Gathering Data Through All Senses",
+            "Creating, Imagining, Innovating",
+            "Responding with Wonderment and Awe",
+            "Taking Responsible Risks",
+            "Finding Humor",
+            "Thinking Interdependently",
+            "Remaining Open to Continuous Learning"
+        ];
+
+        res.render("index", {
+            entries,
+            habits,
+            currentFilter: req.query.habit || ''
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error fetching entries');
+    }
 });
 
 route.get("/createEntry", (req, res) => {
@@ -48,7 +86,7 @@ route.post("/createEntry", async (req, res) => {
     // Send this new entry to all connected clients
     emitNewEntry({
         id: entry._id,
-        date: entry.date.toLocaleDateString(),
+        date: entry.date==null ? null :entry.date.toLocaleDateString(),
         habit: entry.habit,
         content: entry.content.slice(0, 20) + "...",
     });
@@ -60,13 +98,24 @@ route.post("/createEntry", async (req, res) => {
 // Edit an entry with the id given as a parameter
 route.get("/editEntry/:id", async (req, res) => {
     try {
-        const entry = await Entry.findById(req.params.id);
+        // Fetch the entry from database
+        const entry = await Entry.findById(req.params.id).lean();
+        
+        if (!entry) {
+            return res.status(404).send('Entry not found');
+        }
+
+        // Format the date for the input field (YYYY-MM-DD)
+        entry.date = entry.date.toISOString().split('T')[0];
+
+        // Render the editEntry view with the entry data and habits
         res.render('editEntry', { 
-            habits: habitsOfMind, 
-            entry: entry 
+            entry: entry,
+            habits: habitsOfMind  // Using the habitsOfMind from your existing code
         });
     } catch (err) {
-        res.status(500).send(err);
+        console.error('Error fetching entry:', err);
+        res.status(500).send('Error fetching entry');
     }
 });
 
@@ -108,6 +157,61 @@ route.get('/getEntry/:id', async (req, res) => {
         res.json(entry);
     } catch (err) {
         res.status(500).send('Server error');
+    }
+});
+
+// Add route for deleting an entry
+route.delete("/deleteEntry/:id", async (req, res) => {
+    try {
+        const entry = await Entry.findByIdAndDelete(req.params.id);
+        if (!entry) {
+            return res.status(404).send('Entry not found');
+        }
+        res.status(200).send('Entry deleted successfully');
+    } catch (err) {
+        console.error('Error deleting entry:', err);
+        res.status(500).send(err.message);
+    }
+});
+
+// Add this new route
+route.get("/export", async (req, res) => {
+    try {
+        // Get entries for the current user
+        const entries = await Entry.find({ email: req.session.email })
+            .sort({ date: -1 })
+            .lean()
+            .exec();
+
+        // Format entries for CSV
+        const formattedEntries = entries.map(entry => ({
+            Date: entry.date.toLocaleDateString('en-US'),
+            Habit: entry.habit,
+            Content: entry.content
+        }));
+
+        // Check if user wants to display on screen
+        if (req.query.display === 'screen') {
+            return res.render('export', { entries: formattedEntries });
+        }
+
+        // Create CSV content
+        const csvHeader = ['Date', 'Habit', 'Content'].join(',') + '\n';
+        const csvRows = formattedEntries.map(entry => 
+            [entry.Date, entry.Habit, `"${entry.Content.replace(/"/g, '""')}"`].join(',')
+        ).join('\n');
+        const csvContent = csvHeader + csvRows;
+
+        // Set headers for file download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=journal_entries.csv');
+        
+        // Send the CSV file
+        res.send(csvContent);
+
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error exporting entries');
     }
 });
 

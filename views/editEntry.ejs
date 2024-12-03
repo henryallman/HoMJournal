@@ -1,9 +1,9 @@
 <!-- include header -->
-<% include("include/_header") %>
+<%- include('include/_header') %>
 
 <!-- Main Site -->
 <main>
-    <img src="img/SE-GitHub-image.png" alt="NCHS Logo" />
+    <img src="/img/SE-GitHub-image.png" alt="NCHS Logo" />
     <h1>Edit Habits of Mind Journal Entry</h1>
     <div>
         <label>Date <input type="date" class="date" value="<%= entry.date %>" /></label>
@@ -24,6 +24,9 @@
         <label>Journal Entry <textarea class="content"><%=entry.content%></textarea></label>
         <input type="hidden" class="entryId" value="<%=entry._id%>" />
         <input type="submit" class="submit" value="Update" />
+        
+        <!-- Add delete button -->
+        <button type="button" class="delete-btn" style="background-color: #ff4444; margin-top: 10px;">Delete Entry</button>
     </div>
 </main>
 
@@ -32,4 +35,4 @@
 <script src="/js/editEntry.js"></script>
 
 <!-- include footer -->
-<% include("include/_footer") %>
+<%- include('include/_footer') %>
